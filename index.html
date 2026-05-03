@@ -110,7 +110,21 @@ input::placeholder { color: var(--text3); }
 </head>
 <body>
 
-<div class="shell">
+<!-- Password Screen -->
+<div id="password-screen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;width:300px">
+    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--accent)"></div>
+      Elevate XI Media
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:24px;font-family:'DM Mono',monospace">Outreach Dashboard</div>
+    <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()" style="width:100%;margin-bottom:10px;text-align:center;font-size:15px;letter-spacing:0.1em" />
+    <button class="btn primary" onclick="checkPassword()" style="width:100%;justify-content:center">Enter</button>
+    <div id="pw-error" style="display:none;color:var(--red);font-size:12px;margin-top:10px">Incorrect password</div>
+  </div>
+</div>
+
+<div class="shell" id="main-shell" style="display:none">
 
   <!-- Topbar -->
   <div class="topbar">
@@ -258,9 +272,21 @@ input::placeholder { color: var(--text3); }
 
   </div>
 </div>
+</div>
 
 <script>
 // ── Clock ──────────────────────────────────────────────────
+function checkPassword() {
+  const val = document.getElementById('pw-input').value;
+  if (val === PASSWORD) {
+    document.getElementById('password-screen').style.display = 'none';
+    document.getElementById('main-shell').style.display = 'grid';
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
 function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -279,6 +305,8 @@ function showView(v) {
 
 // ── API Key ────────────────────────────────────────────────
 const RAPID_KEY = '34aadf2849msh71857149287b6fbp1748e1jsn80c35149f79b';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwotf7IKxJFKM72wzh0Xoz-kO0gHa0eYKeK6UgacdmXzoWnC1oVzFcCbqn_FsMtSqCB9Q/exec';
+const PASSWORD = '070845';
 
 // ── Player Search ──────────────────────────────────────────
 async function searchPlayer() {
@@ -478,10 +506,35 @@ function fallbackCopy(text) {
   showCopied();
 }
 
-function showCopied() {
+async function showCopied() {
   const confirm = document.getElementById('copy-confirm');
   confirm.style.display = 'block';
-  setTimeout(() => confirm.style.display = 'none', 2500);
+  confirm.style.background = 'var(--accent2)';
+  confirm.style.color = 'var(--accent)';
+  confirm.textContent = 'Saving to sheet...';
+
+  const payload = {
+    agent: document.getElementById('f-agent').value,
+    email: document.getElementById('f-email').value,
+    player: document.getElementById('f-player').value,
+    club: document.getElementById('f-club').value
+  };
+
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    confirm.textContent = '✓ Added to sheet';
+  } catch(e) {
+    confirm.textContent = 'Sheet error — row copied to clipboard instead';
+    confirm.style.background = 'var(--amber-dim)';
+    confirm.style.color = 'var(--amber)';
+  }
+
+  setTimeout(() => confirm.style.display = 'none', 3000);
   adjustLeads(1);
 }
 
