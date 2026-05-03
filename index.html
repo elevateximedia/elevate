@@ -521,15 +521,20 @@ async function showCopied() {
   };
 
   try {
-    await fetch(SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const params = new URLSearchParams({
+      agent: payload.agent,
+      email: payload.email,
+      player: payload.player,
+      club: payload.club
+    });
+    await fetch(SHEETS_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode: 'no-cors'
     });
     confirm.textContent = '✓ Added to sheet';
   } catch(e) {
-    confirm.textContent = 'Sheet error — row copied to clipboard instead';
+    console.log('Sheets error:', e.message);
+    confirm.textContent = 'Sheet error — check console';
     confirm.style.background = 'var(--amber-dim)';
     confirm.style.color = 'var(--amber)';
   }
