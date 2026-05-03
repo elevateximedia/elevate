@@ -421,35 +421,32 @@ async function selectPlayer(card, name, club, playerId, agentFromMarket, tmUrl) 
   document.getElementById('fill-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Fetch player profile to get agent name
-  if (playerId) {
+  if (tmUrl) {
     try {
-      const res = await fetch(
-        `https://transfermarkt-football-data-api.p.rapidapi.com/api/v1/players/profile?id=${playerId}`,
-        {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-host': 'transfermarkt-football-data-api.p.rapidapi.com',
-            'x-rapidapi-key': RAPID_KEY
-          }
-        }
-      );
+      // Fetch player profile page via proxy to get agent
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(tmUrl)}`;
+      const res = await fetch(proxyUrl);
       const data = await res.json();
-      console.log('Profile RAW:', JSON.stringify(data));
+      const html = data.contents;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
 
-      const profile = data?.data || {};
+      // Get current club
+      const clubEl = doc.querySelector('.data-header__club a');
+      if (clubEl) document.getElementById('f-club').value = clubEl.textContent.trim();
 
-      // Fill club from profile if available (more accurate)
-      if (profile.currentClub) {
-        document.getElementById('f-club').value = profile.currentClub;
+      // Get agent name from profile page
+      let agentName = '';
+      const labels = doc.querySelectorAll('.info-table__content--regular, .info-table span, td');
+      for (const el of labels) {
+        if (/player agent/i.test(el.textContent)) {
+          const next = el.nextElementSibling || el.parentElement?.nextElementSibling;
+          if (next) { agentName = next.textContent.trim().substring(0, 80); break; }
+        }
       }
 
-      // Fill agent if listed
-      const agent = profile.agent;
-      if (agent && typeof agent === 'string' && agent.trim()) {
-        document.getElementById('f-agent').value = agent.trim();
-        document.getElementById('f-agent').placeholder = 'Add manually';
-      } else if (agent && typeof agent === 'object' && agent.name) {
-        document.getElementById('f-agent').value = agent.name.trim();
+      if (agentName) {
+        document.getElementById('f-agent').value = agentName;
         document.getElementById('f-agent').placeholder = 'Add manually';
       } else if (agentFromMarket) {
         document.getElementById('f-agent').value = agentFromMarket;
