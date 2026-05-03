@@ -281,6 +281,7 @@ function checkPassword() {
   if (val === PASSWORD) {
     document.getElementById('password-screen').style.display = 'none';
     document.getElementById('main-shell').style.display = 'grid';
+    setTimeout(restoreSheet, 300);
   } else {
     document.getElementById('pw-error').style.display = 'block';
     document.getElementById('pw-input').value = '';
@@ -305,7 +306,7 @@ function showView(v) {
 
 // ── API Key ────────────────────────────────────────────────
 const RAPID_KEY = '34aadf2849msh71857149287b6fbp1748e1jsn80c35149f79b';
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwotf7IKxJFKM72wzh0Xoz-kO0gHa0eYKeK6UgacdmXzoWnC1oVzFcCbqn_FsMtSqCB9Q/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbznRVMC-SB7R6-2odZERXr2phqKMVeLdrWQIqGNLF3e6RZvpnLGnh4f_6ouBSaGHTAO5g/exec';
 const PASSWORD = '070845';
 
 // ── Player Search ──────────────────────────────────────────
@@ -570,6 +571,8 @@ function loadSheet() {
   const url = document.getElementById('sheet-url-input').value.trim();
   if (!url) return;
 
+  localStorage.setItem('elevate_sheet_url', url);
+
   document.getElementById('sheet-alert').style.display = 'block';
 
   let embedUrl = url;
@@ -581,6 +584,14 @@ function loadSheet() {
 
   document.getElementById('sheet-iframe').src = embedUrl;
   document.getElementById('sheet-container').style.display = 'block';
+}
+
+function restoreSheet() {
+  const saved = localStorage.getItem('elevate_sheet_url');
+  if (saved) {
+    document.getElementById('sheet-url-input').value = saved;
+    loadSheet();
+  }
 }
 </script>
 </body>
